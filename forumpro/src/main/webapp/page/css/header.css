@@ -1,0 +1,17 @@
+ /* 样式可以根据您的需求自定义 */
+header {
+    background-color: #007BFF;
+    color: #fff;
+    padding: 10px;
+    text-align: right;
+}
+
+#logoutLink {
+    color: #fff;
+    text-decoration: none;
+    margin-right: 20px;
+}
+
+#userInfo {
+    margin-right: 20px;
+}

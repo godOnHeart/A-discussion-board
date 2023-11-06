@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>所有问题</title>
+    <link rel="stylesheet" type="text/css" href="css/header.css">
+    <script src="js/getId.js"></script>
+    <style>
+        /* 用户信息区域 */
+        #userInfo {
+            font-size: 18px;
+        }
+
+        #userInfo a {
+            color: #fff;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+
+        /* 主体容器 */
+        #bodyBox {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 讨论板标题 */
+        h1 {
+            text-align: center;
+            color: #007BFF;
+        }
+
+        /* 消息内容容器 */
+        #content {
+            margin-top: 20px;
+        }
+
+        /* 消息卡片样式 */
+        .card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px;
+            background-color: #f7f7f7;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            background-color: #e0e0e0;
+        }
+
+        .user-id {
+            font-weight: bold;
+        }
+
+        .message-text {
+            margin-top: 5px;
+        }
+
+        .creation-date {
+            font-size: 0.8em;
+            color: #555;
+        }
+
+        /* 添加留言样式 */
+        #messageInput {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #addMessageBtn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #addMessageBtn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+
+</head>
+<body>
+<!--头部-->
+<header>
+    <div id="userInfo">
+        用户ID: <span id="userId"></span>
+        <a id="logoutLink" href="login.html">退出登录</a>
+    </div>
+</header>
+
+<!--主体部分-->
+<div id="bodyBox">
+    <!--展示部分-->
+    <div id="content">
+        <!-- 请求的响应将显示在此 -->
+    </div>
+
+    <div id="addMessage">
+    <textarea id="messageInput" placeholder="在这里输入留言"></textarea>
+    <button id="addMessageBtn">发布留言</button>
+</div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        document.getElementById("userId").textContent=uid
+
+        // 格式化日期时间函数
+        function formatDateTime(dateTimeStr) {
+            var date = new Date(dateTimeStr);
+            var year = date.getFullYear();
+            var month = (date.getMonth() + 1).toString().padStart(2, '0');
+            var day = date.getDate().toString().padStart(2, '0');
+            var hours = date.getHours().toString().padStart(2, '0');
+            var minutes = date.getMinutes().toString().padStart(2, '0');
+            var seconds = date.getSeconds().toString().padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        $.ajax({
+            type: "POST",
+            url: "/getAllMessage", // 后台处理添加书籍的URL
+            success: function (data) {
+
+                // 处理响应数据
+                console.log(data);
+                // 获取显示论坛帖子的容器
+                var forumContainer = $("#content");
+                // 生成卡片
+                data.forEach(function(post) {
+                    var formattedDate = formatDateTime(post.creationDate);
+                    var card = `
+                    <div class="card" data-messageId="${post.messageId}">
+                        <div class="user-id">User ID: ${post.userId}</div>
+                        <div class="message-text">${post.messageText}</div>
+                        <div class="creation-date">${formattedDate}</div>
+                    </div>`;
+                    forumContainer.append(card);
+                });
+
+                // 添加一次点击事件处理程序
+                $(".card").click(function() {
+                    var messageId = $(this).attr('data-messageId');
+                    var url = "message.html?messageId=" + messageId;
+                    window.location.href = url; // 点击后跳转到指定链接
+                });
+
+            },
+            error: function () {
+            }
+        });
+
+
+    //    添加问题
+        // 获取元素
+        const messageContent = document.getElementById("content");
+        const messageInput = document.getElementById("messageInput");
+        const addMessageBtn = document.getElementById("addMessageBtn");
+
+        // 添加点击事件处理程序以添加问题
+        addMessageBtn.addEventListener("click", function() {
+            const messageText = messageInput.value.trim();
+            const userId = uid; // 这里使用固定的用户ID，您可以根据实际需求更改
+            const creationDate = new Date().toLocaleString(); // 获取当前时间作为留言创建时间
+
+            // 获取参数，addmessage的参数
+            var formData = {
+                userId: userId,
+                messageText: messageText,
+                creationDate: creationDate,
+            };
+
+            // 点击后添加
+            // 向服务器端添加回答的请求
+            $.ajax({
+                type: "POST",
+                url: "/addMessage", // 后台处理添加书籍的URL
+                data: formData,
+                success: function (data) {
+                    // 清空content容器
+                    $("#content").empty();
+
+                    // 处理响应数据
+                    console.log(data);
+                    var forumContainer = $("#content");
+
+                    // 生成卡片
+                    data.forEach(function (post) {
+                        var formattedDate = formatDateTime(post.creationDate);
+                        var card = `
+                <div class="card" data-messageId="${post.messageId}">
+                    <div class="user-id">User ID: ${post.userId}</div>
+                    <div class="message-text">${post.messageText}</div>
+                    <div class="creation-date">${formattedDate}</div>
+                </div>`;
+                        forumContainer.append(card);
+                    });
+
+                    // 添加一次点击事件处理程序
+                    $(".card").click(function () {
+                        var messageId = $(this).attr('data-messageId');
+                        var url = "message.html?messageId=" + messageId;
+                        window.location.href = url; // 点击后跳转到指定链接
+                    });
+
+
+                },
+                error: function () {
+                }
+            });
+
+
+        });
+
+
+    });
+</script>
+
+
+</body>
+</html>

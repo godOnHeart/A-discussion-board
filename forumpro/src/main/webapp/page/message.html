@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>讨论板</title>
+    <script src="js/getId.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/header.css">
+    <style>
+        /* 添加样式以美化讨论板 */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        #messageList {
+            list-style: none;
+            padding: 0;
+        }
+
+        .message {
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .message .textBox {
+            margin-top: 30px;
+            margin-left: 20px;
+            margin-bottom: 10px;
+            display: block; /* 垂直排列 */
+            word-wrap: break-word; /* 自动换行 */
+        }
+
+        .message .timestamp {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            color: #888;
+        }
+
+        #messageInput {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #addMessageBtn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #addMessageBtn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+
+</head>
+<body>
+<!--头部-->
+<header>
+    <div id="userInfo">
+        用户ID: <span id="userId"></span>
+        <a id="logoutLink" href="login.html">退出登录</a>
+    </div>
+</header>
+
+<div class="container">
+    <h1>讨论板</h1>
+    <ul id="messageList">
+        <!-- 留言将在此显示 -->
+    </ul>
+    <textarea id="messageInput" placeholder="在这里输入留言"></textarea>
+    <button id="addMessageBtn">发布留言</button>
+</div>
+
+<script src="js/getId.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+
+        $(document).ready(function(){
+            document.getElementById("userId").textContent=uid
+            // 获取元素
+            const messageList = document.getElementById("messageList");
+            const messageInput = document.getElementById("messageInput");
+            const addMessageBtn = document.getElementById("addMessageBtn");
+
+            // 获取URL中的查询参数
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+
+            // 通过参数名获取messageId
+            const messageId = urlParams.get("messageId");
+
+            // 添加点击事件处理程序以添加留言
+            addMessageBtn.addEventListener("click", function() {
+                const messageText = messageInput.value.trim();
+                const userId = uid; // 这里使用固定的用户ID，您可以根据实际需求更改
+                const creationDate = new Date().toLocaleString(); // 获取当前时间作为留言创建时间
+
+                //生成回复的代码
+                if (messageText !== "") {
+                    const messageItem = document.createElement("li");
+                    messageItem.classList.add("message");
+                    messageItem.innerHTML = `
+                        <strong>${userId}</strong><br>
+                        <div class="textBox">${messageText}</div><br>
+                        <div class="timestamp">${formatDateTime(creationDate)}</div>`;
+                    messageList.appendChild(messageItem);
+                    messageInput.value = "";
+                }
+
+                // 获取参数，addre的参数
+                var formData = {
+                    userId: userId,
+                    messageId: messageId,
+                    commentText: messageText,
+                    creationDate: creationDate,
+                };
+
+            //    点击后添加
+                // 向服务器端添加回答的请求
+                $.ajax({
+                    type: "POST",
+                    url: "/addRe", // 后台处理添加书籍的URL
+                    data: formData,
+                    success: function (response) {
+                        console.log("OK")
+                    },
+                    error: function () {
+                        console.log("NO")
+                    }
+                });
+
+            });
+
+
+            // 获取参数，搜索回答所用的参数
+            var formData = {
+                messageId: messageId,
+            };
+            // 向服务器端发送登录请求,搜索该问题所有的回答
+            $.ajax({
+                type: "POST",
+                url: "/getAllRe", // 后台处理添加书籍的URL
+                data: formData,
+                success: function (response) {
+                    console.log(response)
+                    response.forEach(function (post){
+                        if (post !== "") {
+                            const messageItem = document.createElement("li");
+                            messageItem.classList.add("message");
+                            messageItem.innerHTML = `
+                                <strong>${post.userId}</strong><br>
+                                <div class="textBox">${post.commentText}</div><br>
+                                <div class="timestamp">${formatDateTime(post.creationDate)}</div>`;
+                            messageList.appendChild(messageItem);
+                            messageInput.value = "";
+                        }
+                    });
+                },
+                error: function () {
+                }
+            });
+
+
+        });
+
+        // 格式化日期时间函数
+        function formatDateTime(dateTimeStr) {
+            var date = new Date(dateTimeStr);
+            var year = date.getFullYear();
+            var month = (date.getMonth() + 1).toString().padStart(2, '0');
+            var day = date.getDate().toString().padStart(2, '0');
+            var hours = date.getHours().toString().padStart(2, '0');
+            var minutes = date.getMinutes().toString().padStart(2, '0');
+            var seconds = date.getSeconds().toString().padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+
+</script>
+
+</body>
+</html>
